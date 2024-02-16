@@ -1,35 +1,50 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import {
+  Outlet,
+  Link,
+  createRouter,
+  createRoute,
+  createRootRoute,
+} from "@tanstack/react-router";
+import { Landing } from "./components/Landing";
+import { Room } from "./components/Room";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
+const rootRoute = createRootRoute({
+  component: () => (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <div className="p-2 flex gap-2">
+        <Link to="/" className="[&.active]:font-bold">
+          Home
+        </Link>
+        <Link to="/room" className="[&.active]:font-bold">
+          Room
+        </Link>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <hr />
+      <Outlet />
     </>
-  )
+  ),
+});
+
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  component: Landing,
+});
+
+const roomRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/room",
+  component: Room,
+});
+
+const routeTree = rootRoute.addChildren([indexRoute, roomRoute]);
+
+const router = createRouter({ routeTree });
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
 }
 
-export default App
+export default router;
