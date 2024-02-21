@@ -12,26 +12,38 @@ export class RoomManager {
     this.rooms = new Map<string, Room>();
   }
   createRoom(user1: User, user2: User) {
-    const roomId = this.generate();
+    const roomId = this.generate().toString();
     this.rooms.set(roomId.toString(), { user1, user2 });
 
-    user1.socket.emit("send-offer", {
+    user1?.socket.emit("send-offer", {
+      roomId,
+    });
+
+    user2?.socket.emit("send-offer", {
       roomId,
     });
   }
 
+  //todo => write the cleanup lgoic here for the room
+  // userLeft(roomId: string) {
+
+  // }
+
   onOffer(roomId: string, sdp: string) {
     const user2 = this.rooms.get(roomId)?.user2;
+    console.log("user2 is" + user2);
     user2?.socket.emit("offer", {
-      roomId,
       sdp,
+      roomId,
     });
   }
   onAnswer(roomId: string, sdp: string) {
     const user1 = this.rooms.get(roomId)?.user1;
-    user1?.socket.emit("offer", {
-      roomId,
+    console.log("user1 is" + user1);
+
+    user1?.socket.emit("answer", {
       sdp,
+      roomId,
     });
   }
 

@@ -3,7 +3,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "code-build": "bun build ./src/index.ts --outdir ./dist --target bun"
+    "code-build": "bun build ./src/index.ts --outdir ./dist --target bun",
+    "start": "bun dist/index.js"
   },
   "devDependencies": {
     "bun-types": "latest"
