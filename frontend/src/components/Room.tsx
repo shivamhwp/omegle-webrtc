@@ -1,11 +1,17 @@
-import { useSearch } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+// import { useSearch } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { Socket, io } from "socket.io-client";
-export function Room() {
-  const name = useSearch({ from: "/room" });
-  const [socket, setSocket] = useState<null | Socket>(null);
+export const Room = ({
+  name,
+  localAudioTrack,
+  localVideoTrack,
+}: {
+  name: string;
+  localAudioTrack: MediaStreamTrack | null;
+  localVideoTrack: MediaStreamTrack | null;
+}) => {
+  // const name = useSearch({ from: "/room" });
   const URL = "http://localhost:3000";
-  const [lobby, setLobby] = useState(true);
   const [lobby, setLobby] = useState(true);
   const [socket, setSocket] = useState<null | Socket>(null);
   const [sendingPc, setSendingPc] = useState<null | RTCPeerConnection>(null);
@@ -13,45 +19,87 @@ export function Room() {
     null
   );
   const [remoteVideoTrack, setRemoteVideoTrack] =
-    useState<MediaStreamTrack | null>(null);
-  const [localVideoTracck, setlocalVideoTracck] = useState<
-    MediaStreamTrack,
-    null
-  >(null);
+    useState<null | MediaStreamTrack>(null);
   const [remoteAudioTrack, setRemoteAudioTrack] =
-    useState<MediaStreamTrack | null>(null);
-  const [localAudioTrack, setLocalAudioTrack] = useState<
-    MediaStreamTrack,
-    null
-  >(null);
+    useState<null | MediaStreamTrack>(null);
+
+  const [remoteMediaStream, setRemoteMediaStream] =
+    useState<MediaStream | null>();
+  const remoteVideoRef = useRef<HTMLVideoElement>();
+  const localVideoRef = useRef<HTMLVideoElement>();
 
   useEffect(() => {
     const socket = io(URL);
     socket.on("send-offer", async ({ roomId }) => {
+      console.log("sending-offer");
       setLobby(false);
       const pc = new RTCPeerConnection();
       setSendingPc(pc);
+      if (localVideoTrack) {
+        pc.addTrack(localVideoTrack);
+      }
+      if (localAudioTrack) {
+        pc.addTrack(localAudioTrack);
+      }
 
-      const sdp = await pc.createOffer();
-      socket.emit("offer", {
-        sdp,
-        roomId,
-      });
+      pc.onicecandidate = async (e) => {
+        console.log("recieveing ice candidate locally ");
+        if (e.candidate) {
+          socket.emit("add-ice-candidate", {
+            candidate: e.candidate,
+            type: "sender",
+          });
+        }
+      };
+      pc.onnegotiationneeded = async () => {
+        console.log("on negotiation needed, sending offer");
+        const sdp = await pc.createOffer();
+        pc.setLocalDescription(sdp);
+        socket.emit("offer", {
+          sdp,
+          roomId,
+        });
+      };
     });
 
-    socket.on("offer", async ({ roomId, offer }) => {
+    socket.on("offer", async ({ roomId, sdp: remoteSdp }) => {
       setLobby(false);
+      console.log(" recieved offer");
       const pc = new RTCPeerConnection();
-      pc.setRemoteDescription({ sdp: offer, type: "offer" });
+      pc?.setRemoteDescription(remoteSdp);
       const sdp = await pc.createAnswer();
+      pc.setLocalDescription(sdp);
+      const stream = new MediaStream();
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = stream;
+      }
+      setRemoteMediaStream(stream);
+
       // trickle ice
       setReceivingPc(pc);
+
+      pc.onicecandidate = async (e) => {
+        console.log("on ice candidate on recieving side");
+        if (e.candidate) {
+          socket.emit("add-ice-candidate", {
+            candidate: e.candidate,
+            type: "reciever",
+          });
+        }
+      };
+
       pc.ontrack = ({ track, type }) => {
         if (type == "audio") {
-          setRemoteAudioTrack(track);
+          w;
+          // setRemoteAudioTrack(track);
+          // @ts-ignore
+          remoteVideoRef.current?.srcObject.addTrack(track);
         } else {
-          setRemoteVideoTrack(track);
+          // setRemoteVideoTrack(track);
+          // @ts-ignore
+          remoteVideoRef.current?.srcObject.addTrack(track);
         }
+        remoteVideoRef.current?.play();
       };
       socket.emit("answer", {
         roomId,
@@ -59,47 +107,69 @@ export function Room() {
       });
     });
 
-    socket.on("answer", ({ roomId, answer }) => {
+    socket.on("answer", ({ roomId, sdp: remoteSdp }) => {
       setLobby(false);
       setSendingPc((pc) => {
-        pc?.setRemoteDescription({
-          type: "answer",
-          sdp: answer,
-        });
+        pc?.setRemoteDescription(remoteSdp);
         return pc;
       });
+      console.log("loop closed");
     });
 
     socket.on("lobby", () => {
       setLobby(true);
     });
 
+    socket.on("add-ice-candidate", ({ candidate, type }) => {
+      console.log("add ice candidate form remote side");
+      console.log({ candidate, type });
+
+      if (type == "sender") {
+        setReceivingPc((pc) => {
+          pc?.addIceCandidate(candidate);
+          return pc;
+        });
+      } else {
+        setReceivingPc((pc) => {
+          pc?.addIceCandidate(candidate);
+          return pc;
+        });
+      }
+    });
+
     setSocket(socket);
   }, [name]);
-  if (lobby) {
-    return (
-      <div className="flex items-center justify-center w-screen h-screen text-2xl">
-        waiting to connect you to someone
-      </div>
-    );
-  }
+
+  useEffect(() => {
+    if (localVideoRef.current) {
+      if (localVideoTrack) {
+        localVideoRef.current.srcObject = new MediaStream([localVideoTrack]);
+        localVideoRef.current.play();
+      }
+    }
+  }, [localVideoRef]);
 
   return (
-    <div className=" w-screen h-screen  flex flex-col items-center justify-center gap-8">
-      <div className=" text-xl">hi </div>
-
-      <div className="gap-4 flex items-center justify-center">
+    <div className="flex h-screen w-screen items-center  justify-evenly bg-zinc-100  p-2 max-lg:flex-col  max-md:flex-col  max-sm:flex-col lg:gap-4 xl:gap-4">
+      <div className="flex items-center justify-center gap-4">
         <video
+          autoPlay
           width={800}
           height={450}
-          className="border-2 border-black rounded-lg"
-        ></video>
+          ref={localVideoRef}
+          className="scale-x-[-1] transform rounded-lg border-8 border-[#C1C1C1]"
+        />
+      </div>
+      {lobby ? "waiting for someone to join" : null}
+      <div className="className=gap-4 flex items-center justify-center">
         <video
+          autoPlay
+          ref={remoteVideoRef}
           width={800}
           height={450}
-          className="border-2 border-black  rounded-e-lg"
-        ></video>
+          className="scale-x-[-1] transform rounded-lg border-8 border-[#C1C1C1]"
+        />
       </div>
     </div>
   );
-}
+};

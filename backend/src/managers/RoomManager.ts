@@ -24,27 +24,49 @@ export class RoomManager {
     });
   }
 
-  //todo => write the cleanup lgoic here for the room
+  //todo => write the cleanup logic here for the room
   // userLeft(roomId: string) {
 
   // }
 
-  onOffer(roomId: string, sdp: string) {
-    const user2 = this.rooms.get(roomId)?.user2;
-    console.log("user2 is" + user2);
-    user2?.socket.emit("offer", {
+  onOffer(roomId: string, sdp: string, senderSocketId: string) {
+    const room = this.rooms.get(roomId);
+    if (!room) {
+      return;
+    }
+    const receivingUser =
+      room.user1.socket.id === senderSocketId ? room.user2 : room.user1;
+    receivingUser?.socket.emit("offer", {
       sdp,
       roomId,
     });
   }
-  onAnswer(roomId: string, sdp: string) {
-    const user1 = this.rooms.get(roomId)?.user1;
-    console.log("user1 is" + user1);
-
-    user1?.socket.emit("answer", {
+  onAnswer(roomId: string, sdp: string, senderSocketId: string) {
+    const room = this.rooms.get(roomId);
+    if (!room) {
+      return;
+    }
+    const receivingUser =
+      room.user1.socket.id === senderSocketId ? room.user2 : room.user1;
+    receivingUser?.socket.emit("answer", {
       sdp,
       roomId,
     });
+  }
+
+  onIceCandidates(
+    roomId: string,
+    senderSocketId: string,
+    candidate: any,
+    type: "sender" | "reciever"
+  ) {
+    const room = this.rooms.get(roomId);
+    if (!room) {
+      return;
+    }
+    const receivingUser =
+      room.user1.socket.id === senderSocketId ? room.user2 : room.user1;
+    receivingUser.socket.send("add-ice-candidate", { candidate, type });
   }
 
   generate() {
