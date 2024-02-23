@@ -79,16 +79,21 @@ export const Room = ({
       setReceivingPc(pc);
 
       pc.onicecandidate = async (e) => {
+        if (!e.candidate) {
+          return;
+        }
         console.log("on ice candidate on recieving side");
         if (e.candidate) {
           socket.emit("add-ice-candidate", {
             candidate: e.candidate,
             type: "reciever",
+            roomId,
           });
         }
       };
 
-      pc.ontrack = ({ track, type }) => {
+      pc.ontrack = (e) => {
+        const { track, type } = e;
         if (type == "audio") {
           w;
           // setRemoteAudioTrack(track);
@@ -130,7 +135,7 @@ export const Room = ({
           return pc;
         });
       } else {
-        setReceivingPc((pc) => {
+        setSendingPc((pc) => {
           pc?.addIceCandidate(candidate);
           return pc;
         });
