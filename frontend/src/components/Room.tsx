@@ -48,6 +48,7 @@ export const Room = ({
           socket.emit("add-ice-candidate", {
             candidate: e.candidate,
             type: "sender",
+            roomId,
           });
         }
       };
@@ -78,38 +79,57 @@ export const Room = ({
       // trickle ice
       setReceivingPc(pc);
 
+      pc.ontrack = (e) => {
+        //   const { track, type } = e;
+        //   if (type == "audio") {
+        //     // setRemoteAudioTrack(track);
+        //     // @ts-ignore
+        //     remoteVideoRef.current?.srcObject.addTrack(track);
+        //   } else {
+        //     // setRemoteVideoTrack(track);
+        //     // @ts-ignore
+        //     remoteVideoRef.current?.srcObject.addTrack(track);
+        //   }
+        // //@ts-ignore
+        //   remoteVideoRef.current?.play();
+      };
+
       pc.onicecandidate = async (e) => {
         if (!e.candidate) {
           return;
         }
-        console.log("on ice candidate on recieving side");
         if (e.candidate) {
           socket.emit("add-ice-candidate", {
             candidate: e.candidate,
             type: "reciever",
             roomId,
           });
-        }
-      };
 
-      pc.ontrack = (e) => {
-        const { track, type } = e;
-        if (type == "audio") {
-          w;
-          // setRemoteAudioTrack(track);
-          // @ts-ignore
-          remoteVideoRef.current?.srcObject.addTrack(track);
-        } else {
-          // setRemoteVideoTrack(track);
-          // @ts-ignore
-          remoteVideoRef.current?.srcObject.addTrack(track);
+          socket.emit("answer", {
+            roomId,
+            sdp: sdp,
+          });
+          setTimeout(() => {
+            const track1 = pc.getTransceivers()[0].receiver.track;
+            const track2 = pc.getTransceivers()[1].receiver.track;
+            if (track1.kind == "video") {
+              setRemoteAudioTrack(track2);
+              setRemoteVideoTrack(track1);
+            } else {
+              setRemoteAudioTrack(track1);
+              setRemoteVideoTrack(track2);
+              // setRemoteVideoTrack(track);
+            }
+            // @ts-ignore
+            remoteVideoRef.current?.srcObject.addTrack(track1);
+            // @ts-ignore
+            remoteVideoRef.current?.srcObject.addTrack(track2);
+            //@ts-ignore
+            remoteVideoRef.current.play();
+            // };
+          }, 2000);
         }
-        remoteVideoRef.current?.play();
       };
-      socket.emit("answer", {
-        roomId,
-        sdp: sdp,
-      });
     });
 
     socket.on("answer", ({ roomId, sdp: remoteSdp }) => {
