@@ -2,8 +2,8 @@ import { Socket } from "socket.io";
 import { RoomManager } from "./RoomManager";
 
 export interface User {
-  socket: Socket;
   name: string;
+  socket: Socket;
 }
 
 export class UserManager {
@@ -41,7 +41,6 @@ export class UserManager {
     if (this.queue.length < 2) {
       return;
     }
-
     const id1 = this.queue.pop();
     const id2 = this.queue.pop();
     console.log("id is " + id1 + " " + id2);
@@ -53,7 +52,7 @@ export class UserManager {
     }
     console.log("creating roonm");
 
-    // const room = this.roomManager.createRoom(user1, user2);
+    const room = this.roomManager.createRoom(user1, user2);
     this.clearQueue();
   }
 

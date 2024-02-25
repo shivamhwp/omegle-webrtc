@@ -4,7 +4,7 @@ import { Room } from "./Room";
 
 export function Landing() {
   const [name, setName] = useState("");
-  const [localVideoTracck, setlocalVideoTracck] =
+  const [localVideoTrack, setlocalVideoTracck] =
     useState<MediaStreamTrack | null>(null);
   const [localAudioTrack, setLocalAudioTrack] =
     useState<MediaStreamTrack | null>(null);
@@ -46,7 +46,7 @@ export function Landing() {
             autoPlay
             ref={videoRef}
             className=" border-8 border-[#C1C1C1] rounded-lg transform scale-x-[-1]"
-          ></video>
+          />
         </div>
 
         <div className=" w-2/5 h-full gap-4 flex flex-col items-center justify-center ">
@@ -60,19 +60,14 @@ export function Landing() {
               setName(e.target.value);
             }}
           />
-          <Link
-            to={`/room?name=${name}`}
-            className="p-2 border-2 rounded-md  w-96  bg-[#0F0F0F] text-white px-10"
+          <button
+            className=" items-center justify-center  text-lg flex p-2 border-2 rounded-md  w-96  bg-[#0F0F0F] text-white px-10"
+            onClick={() => {
+              setJoined(true);
+            }}
           >
-            <button
-              className="w-full items-center justify-center  text-lg flex"
-              onClick={() => {
-                setJoined(true);
-              }}
-            >
-              Join
-            </button>
-          </Link>
+            Join
+          </button>
         </div>
       </div>
     );
@@ -81,7 +76,7 @@ export function Landing() {
     <Room
       name={name}
       localAudioTrack={localAudioTrack}
-      localVideoTrack={localVideoTracck}
+      localVideoTrack={localVideoTrack}
     />
   );
 }

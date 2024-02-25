@@ -85,15 +85,15 @@ export const Room = ({
       pc.ontrack = (e) => {
         alert("ontrack");
         // console.error("inside ontrack");
-        // const {track, type} = e;
-        // if (type == 'audio') {
-        //     // setRemoteAudioTrack(track);
-        //     // @ts-ignore
-        //     remoteVideoRef.current.srcObject.addTrack(track)
+        // const { track, type } = e;
+        // if (type == "audio") {
+        //   // setRemoteAudioTrack(track);
+        //   // @ts-ignore
+        //   remoteVideoRef.current.srcObject.addTrack(track);
         // } else {
-        //     // setRemoteVideoTrack(track);
-        //     // @ts-ignore
-        //     remoteVideoRef.current.srcObject.addTrack(track)
+        //   // setRemoteVideoTrack(track);
+        //   // @ts-ignore
+        //   remoteVideoRef.current.srcObject.addTrack(track);
         // }
         // //@ts-ignore
         // remoteVideoRef.current.play();
@@ -133,7 +133,7 @@ export const Room = ({
             //@ts-ignore
             remoteVideoRef.current?.play();
             // };
-          }, 2000);
+          }, 100);
         }
       };
     });
@@ -190,25 +190,21 @@ export const Room = ({
 
   return (
     <div className="flex h-screen w-screen items-center  justify-evenly bg-zinc-100  p-2 max-lg:flex-col  max-md:flex-col  max-sm:flex-col lg:gap-4 xl:gap-4">
-      <div className="flex items-center justify-center gap-4">
-        <video
-          autoPlay
-          width={800}
-          height={450}
-          ref={localVideoRef}
-          className="scale-x-[-1] transform rounded-lg border-8 border-[#C1C1C1]"
-        />
-      </div>
+      <video
+        autoPlay
+        ref={localVideoRef}
+        width={800}
+        height={450}
+        className="scale-x-[-1] transform rounded-lg border-8 border-[#C1C1C1]"
+      />
       {lobby ? "waiting for someone to join" : null}
-      <div className="className=gap-4 flex items-center justify-center">
-        <video
-          autoPlay
-          ref={remoteVideoRef}
-          width={800}
-          height={450}
-          className="scale-x-[-1] transform rounded-lg border-8 border-[#C1C1C1]"
-        />
-      </div>
+      <video
+        autoPlay
+        width={800}
+        height={450}
+        ref={remoteVideoRef}
+        className="scale-x-[-1] transform rounded-lg border-8 border-[#C1C1C1]"
+      />
     </div>
   );
 };
