@@ -1,6 +1,7 @@
-## building omegle clone using webrtc (p2p)
+# building omegle clone using webrtc (p2p)
 
-# how to set it up locally 
+## how to set it up locally 
+
 1. `git clone https://github.com/shivamhwp/omegle-webrtc.git` .
 2. open two terminals.
 3. in one `cd backend` and in the second one `cd frontend`.
